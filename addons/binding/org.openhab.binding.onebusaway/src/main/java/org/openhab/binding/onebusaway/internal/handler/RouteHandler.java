@@ -96,7 +96,7 @@ public class RouteHandler extends BaseThingHandler implements RouteDataListener 
 
     @Override
     public void dispose() {
-        cancelAllScheduledFutures();
+        cancelAllScheduledFutures(true);
         StopHandler stopHandler = getStopHandler();
         if (stopHandler != null) {
             stopHandler.unregisterRouteDataListener(this);
@@ -113,6 +113,10 @@ public class RouteHandler extends BaseThingHandler implements RouteDataListener 
         if (data.isEmpty()) {
             return;
         }
+
+        // Remove all old scheduled futures
+        this.cancelAllScheduledFutures(false);
+
         // Publish to all of our linked channels.
         Calendar now = Calendar.getInstance();
         for (Channel channel : getThing().getChannels()) {
@@ -138,10 +142,10 @@ public class RouteHandler extends BaseThingHandler implements RouteDataListener 
         return config;
     }
 
-    private void cancelAllScheduledFutures() {
+    private void cancelAllScheduledFutures(boolean mayInterruptIfRunning) {
         for (ScheduledFuture<?> future : scheduledFutures) {
             if (!future.isDone() || !future.isCancelled()) {
-                future.cancel(true);
+                future.cancel(mayInterruptIfRunning);
             }
         }
         scheduledFutures = new CopyOnWriteArrayList<>();
